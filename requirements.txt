@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+openai
+pydantic
+python-dotenv
+nltk
+scikit-learn
+transformers 
+sentencepiece
