@@ -1,11 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List,Dict
 
-class EvenNumbersResponse(BaseModel):
-    even_numbers: List[int]
-
-class AutoResponse(BaseModel):
+class ListStringResponse(BaseModel):
     words: List[str]
 
 class SimilarityResponse(BaseModel):
     similarity_score : float
+
+class StringResponse(BaseModel):
+    string: str
+
+class ObjectResponse(BaseModel):
+    entities : Dict[str,str]
+    

@@ -5,5 +5,11 @@ pydantic
 python-dotenv
 nltk
 scikit-learn
-transformers 
-sentencepiece
+sentence_transformers
+textblob
+spacy
+gensim
+rake_nltk
+keybert
+yake
+transformers
