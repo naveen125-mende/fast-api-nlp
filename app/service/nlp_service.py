@@ -1,4 +1,3 @@
-import string
 from app.models.model import StringResponse 
 import spacy
 import numpy as np
@@ -107,10 +106,8 @@ class NlpService:
         if (not sentence):
             raise HTTPException(status_code=400,detail="request should not be empty")
         doc = nlp_lg(sentence)
-        summary_sentences = [str(sent) for sent in doc._.textrank.summary(limit_sentences=3)]
-        summary = ' '.join(summary_sentences)
-        summary_no_punct = summary.translate(str.maketrans('', '', string.punctuation))
-        return StringResponse(string=str(summary)) 
+        for summary in doc._.textrank.summary(limit_phrases=15, limit_sentences=3):
+            return StringResponse(string=str(summary)) 
         
     @staticmethod
     async def extract_keywords(sentence:str):
