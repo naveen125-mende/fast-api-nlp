@@ -88,9 +88,14 @@ class NlpService:
     async def behaviour_of_sentence(sentence:str):
         if (not sentence):
             raise HTTPException(status_code=400,detail="request should not be empty")
-        classifier = pipeline("sentiment-analysis")
+        classifier = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
         result = classifier(sentence)
-        behaviour = result[0]["label"]
+        label_map = {
+            "LABEL_0": "negative",
+            "LABEL_1": "neutral",
+            "LABEL_2": "positive"
+        }
+        behaviour = label_map.get(result[0]["label"], "unknown")
         return{"string":behaviour}
         
     @staticmethod
