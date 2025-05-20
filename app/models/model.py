@@ -11,5 +11,5 @@ class StringResponse(BaseModel):
     string: str
 
 class ObjectResponse(BaseModel):
-    entities : Dict[str,str]
+    entities: Dict[str,str]
     

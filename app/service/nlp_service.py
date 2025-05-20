@@ -1,3 +1,4 @@
+import string
 from app.models.model import StringResponse 
 import spacy
 import numpy as np
@@ -16,10 +17,10 @@ from transformers import pipeline
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
 kw_model = KeyBERT(model='all-MiniLM-L6-v2') 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_trf")
 nlp_lg = spacy.load("en_core_web_lg")
 nlp_lg.add_pipe("textrank")
-
+ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
 
 class NlpService:
 
@@ -97,8 +98,8 @@ class NlpService:
     async def extract_entities(sentence:str):
         if (not sentence):
             raise HTTPException(status_code=400,detail="request should not be empty")
-        doc = nlp(sentence)
-        entities = {ent.text: ent.label_ for ent in doc.ents}
+        ner_results = ner_pipeline(sentence)
+        entities = {entity["word"]: entity["entity_group"] for entity in ner_results}
         return {"entities": entities}
         
     @staticmethod
@@ -106,18 +107,19 @@ class NlpService:
         if (not sentence):
             raise HTTPException(status_code=400,detail="request should not be empty")
         doc = nlp_lg(sentence)
-        for summary in doc._.textrank.summary(limit_phrases=2, limit_sentences=2):
-            return StringResponse(string=str(summary))
+        summary_sentences = [str(sent) for sent in doc._.textrank.summary(limit_sentences=3)]
+        summary = ' '.join(summary_sentences)
+        summary_no_punct = summary.translate(str.maketrans('', '', string.punctuation))
+        return StringResponse(string=str(summary)) 
         
-        
-    # @staticmethod
-    # async def extract_keywords(sentence:str):
-    #     if (not sentence):
-    #         raise HTTPException(status_code=400,detail="request should not be empty")
-    #     r = yake.KeywordExtractor(lan="en", n=3,top=5)
-    #     key_words = r.extract_keywords(sentence)
-    #     words = [kw for kw, score in key_words
-    #     return {"words":words}
+    @staticmethod
+    async def extract_keywords(sentence:str):
+        if (not sentence):
+            raise HTTPException(status_code=400,detail="request should not be empty")
+        r = yake.KeywordExtractor(lan="en")
+        key_words = r.extract_keywords(sentence)
+        words = [kw for kw, score in key_words]
+        return {"words":words}
     
     # @staticmethod
     # async def extract_keywords(sentence:str):
@@ -128,11 +130,11 @@ class NlpService:
     #     keywords = r.get_ranked_phrases()
     #     return {"words":keywords}
     
-    @staticmethod
-    async def extract_keywords(sentence:str):
-        if (not sentence):
-            raise HTTPException(status_code=400,detail="request should not be empty")
-        words = kw_model.extract_keywords(sentence,keyphrase_ngram_range=(2,3),stop_words='english',top_n=5)
-        keywords = [kw for kw,score in words]
-        return {"words":keywords}
+    # @staticmethod
+    # async def extract_keywords(sentence:str):
+    #     if (not sentence):
+    #         raise HTTPException(status_code=400,detail="request should not be empty")
+    #     words = kw_model.extract_keywords(sentence,keyphrase_ngram_range=(2,3),stop_words='english',top_n=5)
+    #     keywords = [kw for kw,score in words]
+    #     return {"words":keywords}
 
