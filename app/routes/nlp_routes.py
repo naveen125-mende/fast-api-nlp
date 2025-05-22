@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException
-from app.models.model import ListStringResponse,SimilarityResponse,StringResponse,ObjectResponse
+from app.models.model import ListStringResponse,SimilarityResponse,StringResponse,ObjectResponse,TrainRequest,SentimentResponse
 from app.service.nlp_service import NlpService
+from app.service.model_training_service import TrainerService
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ async def auto_response(words:str):
 async def similarity_score(text1:str,text2:str):
     return await NlpService.similarity_score(text1,text2)
 
-@router.get('/behaviour', response_model=StringResponse)
+@router.get('/behaviour', response_model=SentimentResponse)
 async def behaviour_of_sentence(sentence:str):
     return await NlpService.behaviour_of_sentence(sentence)
 
@@ -34,3 +35,12 @@ async def text_summarize(sentence:str):
 @router.get('/keywords', response_model=ListStringResponse)
 async def extract_keywords(sentence:str):
     return await NlpService.extract_keywords(sentence)
+
+@router.post("/train")
+async def train_model(request: TrainRequest):
+    result = await TrainerService.train_model(request)
+    
+    if result.get("success"):
+        return {"message": result["message"], "output_dir": result["output_dir"]}
+    else:
+        return {"error": result["message"]}

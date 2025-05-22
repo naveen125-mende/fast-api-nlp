@@ -13,7 +13,6 @@ from rake_nltk import Rake
 from rake_nltk import Rake
 from keybert import KeyBERT
 from transformers import pipeline
-
 model = SentenceTransformer('all-MiniLM-L6-v2')
 kw_model = KeyBERT(model='all-MiniLM-L6-v2') 
 nlp = spacy.load("en_core_web_trf")
@@ -21,7 +20,9 @@ nlp_lg = spacy.load("en_core_web_lg")
 nlp_lg.add_pipe("textrank")
 ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
 # summarizer = pipeline("summarization")
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+# summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+summarizer = pipeline("summarization",  model="google/pegasus-xsum")
+# summarizer = pipeline("summarization", model="google/pegasus-cnn_dailymail")
 
 class NlpService:
 
@@ -97,8 +98,11 @@ class NlpService:
             "LABEL_1": "neutral",
             "LABEL_2": "positive"
         }
-        behaviour = label_map.get(result[0]["label"], "unknown")
-        return{"string":behaviour}
+        label = result[0]["label"]
+        score = result[0]["score"]
+        behaviour = label_map.get(label, "unknown")
+        return {"label": behaviour, "score": score} 
+
         
     @staticmethod
     async def extract_entities(sentence:str):
@@ -108,20 +112,20 @@ class NlpService:
         entities = {ent.text: ent.label_ for ent in doc.ents}
         return {"entities": entities}
         
-    @staticmethod
-    async def text_summarize(sentence:str):
-        if (not sentence):
-            raise HTTPException(status_code=400,detail="request should not be empty")
-        doc = nlp_lg(sentence)
-        for summary in doc._.textrank.summary(limit_phrases=15, limit_sentences=3):
-            return {"string" : str(summary)}
-        
     # @staticmethod
     # async def text_summarize(sentence:str):
     #     if (not sentence):
     #         raise HTTPException(status_code=400,detail="request should not be empty")
-    #     summary = summarizer(sentence, max_length=45, min_length=20, do_sample=False)
-    #     return {"string" :summary[0]['summary_text']}
+    #     doc = nlp_lg(sentence)
+    #     for summary in doc._.textrank.summary(limit_phrases=15, limit_sentences=3):
+    #         return {"string" : str(summary)}
+        
+    @staticmethod
+    async def text_summarize(sentence:str):
+        if (not sentence):
+            raise HTTPException(status_code=400,detail="request should not be empty")
+        summary = summarizer(sentence, max_length=45, min_length=20, do_sample=False)
+        return {"string" :summary[0]['summary_text']}
         
     # @staticmethod
     # async def extract_keywords(sentence:str):
